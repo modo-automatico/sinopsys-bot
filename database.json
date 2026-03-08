@@ -1,0 +1,18 @@
+{
+    "users": {
+        "atendimento": "sinopsys2026"
+    },
+    "automations": [
+        {
+            "id": "9582370e-f17e-44b5-9d3e-c276044491d0",
+            "keyword": "info",
+            "comment_reply": "te enviamos um direct, confere lá!",
+            "dm_text": "segue o link https://sinopsyseditora.com.br/livros/box-guia-pratico-para-terapeutas---4430",
+            "created_at": "2026-03-08T14:52:09.015690",
+            "last_trigger": null,
+            "count_comments": 0,
+            "count_dms": 0
+        }
+    ],
+    "logs": []
+}
