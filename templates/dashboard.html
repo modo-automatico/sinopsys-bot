@@ -33,7 +33,7 @@
 </head>
 <body>
 <header>
-    <div><i class="fas fa-robot"></i> <strong>SINOPSYS BOT</strong> <span style="opacity: 0.7; font-size: 0.7rem;">| V1.2 PREMIUM</span></div>
+    <div><i class="fas fa-robot"></i> <strong>SINOPSYS BOT</strong> <span style="opacity: 0.7; font-size: 0.7rem;">| V1.3 PREMIUM</span></div>
     <div style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; border: 1px solid {% if token_status.status == 'ok' %}#22c55e{% else %}#fb7185{% endif %};">
         <i class="fas fa-circle" style="color: {% if token_status.status == 'ok' %}#22c55e{% else %}#fb7185{% endif %}; font-size: 8px;"></i> {{ token_status.message }}
     </div>
@@ -70,9 +70,8 @@
             </div>
         </div>
         <div>
-            <!-- LOGS NO TOPO -->
             <div class="card" style="border-top: 4px solid var(--brand);">
-                <h2><i class="fas fa-history"></i> Atividade Recente</h2>
+                <h2><i class="fas fa-history"></i> Atividade Recente (V1.3)</h2>
                 <div style="max-height: 300px; overflow-y: auto;">
                     {% if logs %}
                         {% for log in logs %}
@@ -87,7 +86,6 @@
                     {% endif %}
                 </div>
             </div>
-
             <h2><i class="fas fa-list-ul"></i> Automações Ativas</h2>
             {% for auto in automations %}
             <div class="automation-item">

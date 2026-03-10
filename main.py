@@ -29,7 +29,7 @@ def load_db():
         return {
             "users": {"atendimento": "sinopsys2026"}, 
             "automations": [],
-            "logs": [{"id": "1", "timestamp": datetime.now().isoformat(), "type": "system", "message": "Sistema Iniciado com Sucesso"}],
+            "logs": [{"id": "init", "timestamp": datetime.now().isoformat(), "type": "system", "message": "Logs V1.3 Ativados"}],
             "welcome_config": {"active": False, "text": "Olá {nome}, obrigado por nos seguir!"}
         }
     try:
@@ -38,7 +38,7 @@ def load_db():
             if "welcome_config" not in data:
                 data["welcome_config"] = {"active": False, "text": "Olá {nome}, obrigado por nos seguir!"}
             if "logs" not in data or not data["logs"]:
-                data["logs"] = [{"id": "1", "timestamp": datetime.now().isoformat(), "type": "system", "message": "Logs Habilitados"}]
+                data["logs"] = [{"id": "v1.3", "timestamp": datetime.now().isoformat(), "type": "system", "message": "Sistema V1.3 Online"}]
             return data
     except:
         return {"users": {"atendimento": "sinopsys2026"}, "automations": [], "logs": [], "welcome_config": {"active": False}}
@@ -52,7 +52,7 @@ def add_log(event_type: str, message: str, metadata: dict = None):
     new_log = {
         "id": str(uuid.uuid4()),
         "timestamp": datetime.now().isoformat(),
-        "type": event_type, # 'comment', 'dm', 'system', 'error'
+        "type": event_type, 
         "message": message,
         "metadata": metadata or {}
     }
