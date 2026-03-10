@@ -1,254 +1,328 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinopsys - Automações</title>
+    <title>Sinopsys Bot - Gestão Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --brand: #f89800;
-            --dark: #2c3e50;
-            --bg: #f4f7f6;
+        :root { 
+            --brand: #f89800; 
+            --brand-hover: #e08900;
+            --dark: #0f0f15; 
+            --glass: rgba(25,25,33,0.75); 
+            --text: #ededed; 
+            --text-muted: #94a3b8;
+            --line: rgba(255,255,255,0.10);
+            --success: #22c55e;
+            --warning: #fb7185;
         }
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background: var(--dark); 
+            margin: 0; 
+            color: var(--text);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(248,152,0,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, rgba(79,70,229,0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+        header { 
+            background: var(--glass); 
+            backdrop-filter: blur(10px);
+            color: white; 
+            padding: 1rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .container { max-width: 1250px; margin: 2rem auto; padding: 0 1.5rem; }
+        .grid { display: grid; grid-template-columns: 450px 1fr; gap: 2rem; }
+        @media (max-width: 950px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { 
+            background: var(--glass); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid var(--line); 
+            padding: 1.5rem; 
+            border-radius: 1rem; 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3); 
+        }
+        h2 { 
+            margin-top: 0; 
+            color: var(--brand); 
+            font-size: 1.2rem; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            border-bottom: 1px solid var(--line); 
+            padding-bottom: 15px; 
+            margin-bottom: 20px;
+        }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 500; margin-bottom: 0.6rem; font-size: 0.85rem; color: var(--text-muted); }
+        input[type="text"], textarea { 
+            width: 100%; padding: 0.9rem; 
+            border: 1px solid var(--line); 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-family: inherit; 
+            font-size: 0.95rem; 
+            color: white; 
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        input:focus, textarea:focus { border-color: var(--brand); outline: none; background: rgba(0,0,0,0.5); box-shadow: 0 0 0 4px rgba(248,152,0,0.1); }
+        textarea { height: 90px; resize: none; }
+        
+        .checkbox-row { 
+            display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 1.5rem; padding: 15px; 
+            background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid var(--line); 
+        }
+        .checkbox-row label { display: flex; align-items: center; gap: 10px; cursor: pointer; color: white; font-size: 0.9rem; margin-bottom: 0; }
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; }
 
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: var(--bg);
-            margin: 0;
+        .btn { 
+            background: linear-gradient(135deg, var(--brand), #ff7f11); 
+            color: white; border: none; padding: 1rem; border-radius: 12px; 
+            width: 100%; cursor: pointer; font-weight: 700; font-size: 0.9rem; 
+            text-transform: uppercase; letter-spacing: 1px;
+            transition: 0.3s; box-shadow: 0 4px 15px rgba(248,152,0,0.2); 
         }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(248,152,0,0.4); background: linear-gradient(135deg, var(--brand-hover), #ff8c2b); }
+        .btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--line); margin-top: 10px; box-shadow: none; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
 
-        header {
-            background: var(--brand);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+        .welcome-card { border-left: 4px solid var(--success); }
 
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+        .automation-item { 
+            background: var(--glass); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.2rem; 
+            border: 1px solid var(--line); border-left: 6px solid var(--brand); 
+            display: flex; justify-content: space-between; align-items: center; transition: 0.3s; 
         }
+        .automation-item:hover { transform: scale(1.01); background: rgba(35,35,45,0.9); border-color: rgba(248,152,0,0.3); }
+        
+        .keyword-tag { 
+            background: rgba(248,152,0,0.1); color: var(--brand); font-family: 'IBM Plex Mono', monospace;
+            font-weight: 700; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; 
+            border: 1px solid rgba(248,152,0,0.2); 
+        }
+        .badge { 
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; font-weight: 600; 
+            padding: 4px 10px; border-radius: 6px; margin-left: 8px; border: 1px solid; 
+        }
+        .badge-active { border-color: var(--success); color: var(--success); background: rgba(34,197,94,0.1); }
+        .badge-inactive { border-color: var(--text-muted); color: var(--text-muted); background: rgba(100,116,139,0.1); }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 2rem;
+        .metrics { display: flex; gap: 20px; margin-top: 18px; }
+        .metric { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted); }
+        .metric b { color: white; font-size: 1rem; font-family: 'IBM Plex Mono', monospace; }
+        .metric i { color: var(--brand); opacity: 0.8; }
+        
+        .actions { display: flex; gap: 10px; }
+        .action-btn { 
+            background: rgba(255,255,255,0.03); border: 1px solid var(--line); 
+            width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; cursor: pointer; color: white; transition: 0.2s; 
         }
+        .action-btn:hover { background: var(--brand); border-color: var(--brand); transform: translateY(-2px); }
+        .delete-btn:hover { background: var(--warning); border-color: var(--warning); }
+        
+        .hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4; }
+        .hint b { color: var(--brand); }
 
-        @media (max-width: 900px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        h2 {
-            margin-top: 0;
-            color: var(--dark);
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            padding: 0.7rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
-
-        textarea {
-            height: 80px;
-        }
-
-        .btn {
-            background: var(--brand);
-            color: white;
-            border: none;
-            padding: 0.8rem;
-            border-radius: 6px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .btn:hover {
-            background: #e08a00;
-        }
-
-        .automation-item {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-left: 5px solid var(--brand);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .auto-info {
-            flex: 1;
-        }
-
-        .auto-keyword {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: var(--brand);
-            background: #fff3e0;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        .auto-meta {
-            font-size: 0.8rem;
-            color: #999;
-            margin-top: 5px;
-        }
-
-        .auto-metrics {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
-
-        .metric {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: bold;
-            color: var(--dark);
-            font-size: 0.9rem;
-        }
-
-        .metric i {
-            color: var(--brand);
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-delete {
-            color: #e74c3c;
-            background: none;
-            border: 1px solid #e74c3c;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .btn-delete:hover {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 3rem;
-            color: #999;
-        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--dark); }
+        ::-webkit-scrollbar-thumb { background: #252530; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #303040; }
     </style>
 </head>
-
 <body>
 
-    <header>
-        <div><i class="fas fa-robot"></i> <strong>SINOPSYS BOT</strong> | Atendimento</div>
-        <div>Usuário: <strong>{{ username }}</strong> | <a href="#" style="color: white; font-size: 0.8rem;">Sair</a>
+<header>
+    <div><i class="fas fa-robot"></i> <strong>SINOPSYS BOT</strong> <span style="font-weight: normal; opacity: 0.7; font-size: 0.8rem; margin-left: 10px;">| V1.1 PREMIUM</span></div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <!-- Status do Token -->
+        <div style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; border: 1px solid {% if token_status.status == 'ok' %}#22c55e{% else %}#fb7185{% endif %};">
+            <i class="fas fa-circle" style="color: {% if token_status.status == 'ok' %}#22c55e{% else %}#fb7185{% endif %}; font-size: 8px; margin-right: 5px;"></i>
+            {{ token_status.message }}
         </div>
-    </header>
+        <div style="font-size: 0.9rem;"><i class="fas fa-user-circle"></i> <strong>{{ username }}</strong></div>
+    </div>
+</header>
 
-    <div class="container">
-        <div class="grid">
-            <!-- Coluna Esquerda: Cadastro -->
-            <div class="card">
-                <h2><i class="fas fa-plus-circle"></i> Nova Automação</h2>
-                <form action="/add-automation" method="post">
+<div class="container">
+    <div class="grid">
+        <!-- Coluna Esquerda: Configurações -->
+        <div>
+            <!-- Boas Vindas -->
+            <div class="card welcome-card">
+                <h2><i class="fas fa-user-plus"></i> Boas-vindas</h2>
+                <form action="/save-welcome" method="post">
                     <div class="form-group">
-                        <label>Palavra-Chave Gatilho (ex: "EU QUERO")</label>
-                        <input type="text" name="keyword" placeholder="O que o cliente deve comentar..." required>
+                        <label>Mensagem para Novos Seguidores</label>
+                        <textarea name="welcome_text" placeholder="Olá {nome}, bem-vindo à Sinopsys!">{{ welcome.text }}</textarea>
+                        <div class="hint">Enviada automaticamente no Direct ao receber novo seguidor.</div>
                     </div>
-                    <div class="form-group">
-                        <label>Resposta no Comentário</label>
-                        <textarea name="comment_reply"
-                            placeholder="Ex: 'Acabei de te enviar o link no direct! Confere lá!'" required></textarea>
+                    <div class="checkbox-row" style="background: rgba(34,197,94,0.05); border-color: rgba(34,197,94,0.2);">
+                        <label><input type="checkbox" name="welcome_active" {% if welcome.active %}checked{% endif %}> Ativar Boas-vindas</label>
                     </div>
-                    <div class="form-group">
-                        <label>Mensagem no Direct (DM)</label>
-                        <textarea name="dm_text" placeholder="Cole aqui o link do livro ou conteúdo..."
-                            required></textarea>
-                    </div>
-                    <button type="submit" class="btn">CADASTRAR AUTOMAÇÃO</button>
+                    <button type="submit" class="btn" style="background: #22c55e; box-shadow: 0 4px 15px rgba(34,197,94,0.2);">SALVAR BOAS-VINDAS</button>
                 </form>
             </div>
 
-            <!-- Coluna Direita: Lista -->
-            <div>
-                <h2><i class="fas fa-list"></i> Automações Ativas</h2>
-                {% if automations %}
-                {% for auto in automations %}
-                <div class="automation-item">
-                    <div class="auto-info">
-                        <span class="auto-keyword">"{{ auto.keyword }}"</span>
-                        <div class="auto-meta">
-                            <i class="fas fa-calendar-plus"></i> Criada em: {{ auto.date_display }} | 
-                            <i class="fas fa-clock"></i> Último disparo: {{ auto.last_display }}
+            <!-- Automação -->
+            <div class="card">
+                <h2 id="form-title"><i class="fas fa-bolt"></i> Regra de Automação</h2>
+                <form id="auto-form" action="/add-automation" method="post">
+                    <input type="hidden" name="auto_id" id="auto_id">
+                    
+                    <div class="form-group">
+                        <label>Palavra-Chave (Gatilho)</label>
+                        <input type="text" name="keyword" id="keyword" placeholder="Ex: ansiedade" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Onde aplicar e Ações extras?</label>
+                        <div class="checkbox-row">
+                            <label title="Responde no post"><input type="checkbox" name="active_comment" id="active_comment"> Comentário</label>
+                            <label title="Responde no chat"><input type="checkbox" name="active_dm" id="active_dm"> Direct (DM)</label>
+                            <label title="Dá um coração no comentário"><input type="checkbox" name="auto_like" id="auto_like"> Auto-Like</label>
                         </div>
-                        <div class="auto-metrics">
-                            <div class="metric"><i class="fas fa-comment"></i> {{ auto.count_comments }} Comentários</div>
-                            <div class="metric"><i class="fas fa-paper-plane"></i> {{ auto.count_dms }} DMs enviadas</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Resposta no Comentário (Público)</label>
+                        <textarea name="comment_reply" id="comment_reply" placeholder="Ex: Oi {nome}, acabamos de te enviar o link!"></textarea>
+                        <div class="hint">Use <b>{nome}</b> para personalizar.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Mensagem no Direct (Privado)</label>
+                        <textarea name="dm_text" id="dm_text" placeholder="Ex: Olá {nome}, aqui está o acesso ao livro solicitado..."></textarea>
+                    </div>
+
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Link do Botão</label>
+                            <input type="text" name="link_url" id="link_url" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label>Título do Botão</label>
+                            <input type="text" name="button_title" id="button_title" placeholder="Ex: Comprar Agora">
                         </div>
                     </div>
 
+                    <button type="submit" class="btn" id="submit-btn">SALVAR REGRA</button>
+                    <button type="button" class="btn btn-secondary" style="display:none;" id="cancel-btn" onclick="resetForm()">CANCELAR EDIÇÃO</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Lista -->
+        <div>
+            <h2><i class="fas fa-list-ul"></i> Automações Ativas</h2>
+            {% if automations %}
+                {% for auto in automations %}
+                <div class="automation-item">
+                    <div style="flex: 1;">
+                        <span class="keyword-tag">{{ auto.keyword }}</span>
+                        <span class="badge {% if auto.active_comment %}badge-active{% else %}badge-inactive{% endif %}">Comentário</span>
+                        <span class="badge {% if auto.active_dm %}badge-active{% else %}badge-inactive{% endif %}">Direct</span>
+                        {% if auto.auto_like %}<span class="badge" style="border-color: #fb7185; color: #fb7185; background: rgba(251,113,133,0.1);"><i class="fas fa-heart"></i> Like</span>{% endif %}
+                        
+                        <div style="margin-top: 12px; font-size: 0.9rem; color: #94a3b8;">
+                            {% if auto.link_url %} 
+                                <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Botão: <b>{{ auto.button_title }}</b> 
+                                <br><span style="font-size: 0.8rem; opacity: 0.6;">{{ auto.link_url }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="metrics">
+                            <span class="metric"><i class="fas fa-comments"></i> <b>{{ auto.count_comments }}</b> Comentários</span>
+                            <span class="metric"><i class="fas fa-paper-plane"></i> <b>{{ auto.count_dms }}</b> DMs Enviadas</span>
+                        </div>
+                    </div>
                     <div class="actions">
-                        <a href="/delete/{{ auto.id }}" onclick="return confirm('Excluir esta automação?')"
-                            class="btn-delete">
-                            <i class="fas fa-trash"></i>
-                        </a>
+                        <button class="action-btn" onclick='editAuto({{ auto | tojson }})'><i class="fas fa-pencil-alt"></i></button>
+                        <a href="/delete/{{ auto.id }}" onclick="return confirm('Excluir?')" class="action-btn delete-btn"><i class="fas fa-trash"></i></a>
                     </div>
                 </div>
                 {% endfor %}
-                {% else %}
-                <div class="card empty">
-                    <i class="fas fa-ghost fa-3x"></i>
-                    <p>Nenhuma automação cadastrada.</p>
+            {% else %}
+                <div style="text-align: center; padding: 5rem; color: #475569;">
+                    <i class="fas fa-ghost fa-4x" style="margin-bottom: 15px; opacity: 0.3;"></i>
+                    <p>Nenhuma regra cadastrada ainda.</p>
                 </div>
-                {% endif %}
+            {% endif %}
+
+            <!-- Seção de Logs -->
+            <div class="card" style="margin-top: 2rem; border-top: 4px solid var(--brand);">
+                <h2><i class="fas fa-history"></i> Atividade Recente</h2>
+                <div style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                    {% if logs %}
+                        {% for log in logs %}
+                        <div style="padding: 12px; border-bottom: 1px solid var(--line); font-size: 0.85rem; transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span class="badge" style="margin-left: 0; border: none; font-size: 0.6rem; 
+                                    {% if log.type == 'error' %} background: var(--warning); color: white;
+                                    {% elif log.type == 'system' %} background: var(--brand); color: white;
+                                    {% elif log.type == 'dm' %} background: #6366f1; color: white;
+                                    {% elif log.type == 'comment' %} background: #a855f7; color: white;
+                                    {% else %} background: var(--success); color: white; {% endif %}">
+                                    {{ log.type | upper }}
+                                </span>
+                                <span style="color: var(--text-muted); font-size: 0.7rem; font-family: 'IBM Plex Mono', monospace;">{{ log.timestamp[11:19] }}</span>
+                            </div>
+                            <div style="line-height: 1.4; color: #e2e8f0;">{{ log.message }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            <i class="fas fa-stream fa-2x" style="opacity: 0.2; margin-bottom: 10px;"></i>
+                            <p>Aguardando primeiros eventos...</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
+</div>
+
+<script>
+    function editAuto(data) {
+        document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Editar Regra';
+        document.getElementById('auto_id').value = data.id;
+        document.getElementById('keyword').value = data.keyword;
+        document.getElementById('comment_reply').value = data.comment_reply;
+        document.getElementById('dm_text').value = data.dm_text;
+        document.getElementById('link_url').value = data.link_url || '';
+        document.getElementById('button_title').value = data.button_title || '';
+        document.getElementById('active_comment').checked = data.active_comment;
+        document.getElementById('active_dm').checked = data.active_dm;
+        document.getElementById('auto_like').checked = data.auto_like || false;
+        document.getElementById('submit-btn').innerText = 'ATUALIZAR REGRA';
+        document.getElementById('cancel-btn').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+        document.getElementById('form-title').innerHTML = '<i class="fas fa-bolt"></i> Regra de Automação';
+        document.getElementById('auto-form').reset();
+        document.getElementById('auto_id').value = '';
+        document.getElementById('submit-btn').innerText = 'SALVAR REGRA';
+        document.getElementById('cancel-btn').style.display = 'none';
+    }
+</script>
 
 </body>
-
 </html>
