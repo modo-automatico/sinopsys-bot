@@ -29,16 +29,16 @@ def load_db():
         return {
             "users": {"atendimento": "sinopsys2026"}, 
             "automations": [],
-            "logs": [],
-            "welcome_config": {"active": False, "text": "Olá {nome}, obrigado por nos seguir! Em que posso ajudar?"}
+            "logs": [{"id": "1", "timestamp": datetime.now().isoformat(), "type": "system", "message": "Sistema Iniciado com Sucesso"}],
+            "welcome_config": {"active": False, "text": "Olá {nome}, obrigado por nos seguir!"}
         }
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
             if "welcome_config" not in data:
                 data["welcome_config"] = {"active": False, "text": "Olá {nome}, obrigado por nos seguir!"}
-            if "logs" not in data:
-                data["logs"] = []
+            if "logs" not in data or not data["logs"]:
+                data["logs"] = [{"id": "1", "timestamp": datetime.now().isoformat(), "type": "system", "message": "Logs Habilitados"}]
             return data
     except:
         return {"users": {"atendimento": "sinopsys2026"}, "automations": [], "logs": [], "welcome_config": {"active": False}}
@@ -57,26 +57,20 @@ def add_log(event_type: str, message: str, metadata: dict = None):
         "metadata": metadata or {}
     }
     db["logs"].insert(0, new_log)
-    db["logs"] = db["logs"][:100] # Mantém apenas os últimos 100 logs
+    db["logs"] = db["logs"][:100]
     save_db(db)
 
 # --- Segurança ---
 META_APP_SECRET = os.getenv("META_APP_SECRET", "")
 
 def verify_signature(body: bytes, signature: str):
-    if not META_APP_SECRET: 
-        return True # Se não configurado, ignora (para facilitar dev inicial)
-    if not signature: 
-        return False
-    
+    if not META_APP_SECRET: return True
     try:
         sha_name, signature_hash = signature.split('=')
-        if sha_name != 'sha256': 
-            return False
+        if sha_name != 'sha256': return False
         expected_hash = hmac.new(META_APP_SECRET.encode(), body, hashlib.sha256).hexdigest()
         return hmac.compare_digest(expected_hash, signature_hash)
-    except:
-        return False
+    except: return False
 
 def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     db = load_db()
@@ -95,72 +89,41 @@ async def get_user_info(user_id: str):
         async with httpx.AsyncClient() as client:
             resp = await client.get(url)
             return resp.json().get("first_name", "Cliente")
-    except:
-        return "Cliente"
+    except: return "Cliente"
 
 async def like_comment(comment_id: str):
-    # Dá um "coração" no comentário
     if not comment_id or "17865" in comment_id: return
     url = f"https://graph.facebook.com/v21.0/{comment_id}?user_likes=true&access_token={PAGE_ACCESS_TOKEN}"
-    async with httpx.AsyncClient() as client:
-        await client.post(url)
+    async with httpx.AsyncClient() as client: await client.post(url)
 
 async def send_dm_with_button(recipient_id: str, message_text: str, button_title: str, url: str):
-    # Envia uma mensagem com botão de link profissional
     if not recipient_id or recipient_id in ["232323232", "12334"]: return
-    
-    # Se não houver link, envia texto puro
-    if not url:
-        payload = {"recipient": {"id": recipient_id}, "message": {"text": message_text}}
-    else:
-        # Template de botão da Meta
-        payload = {
-            "recipient": {"id": recipient_id},
-            "message": {
-                "attachment": {
-                    "type": "template",
-                    "payload": {
-                        "template_type": "button",
-                        "text": message_text,
-                        "buttons": [
-                            {
-                                "type": "web_url",
-                                "url": url,
-                                "title": button_title or "Acessar Agora"
-                            }
-                        ]
-                    }
-                }
-            }
+    payload = {"recipient": {"id": recipient_id}, "message": {"text": message_text}}
+    if url:
+        payload["message"] = {
+            "attachment": {"type": "template", "payload": {
+                "template_type": "button", "text": message_text,
+                "buttons": [{"type": "web_url", "url": url, "title": button_title or "Acessar Agora"}]
+            }}
         }
-    
     graph_url = f"https://graph.facebook.com/v21.0/me/messages?access_token={PAGE_ACCESS_TOKEN}"
-    async with httpx.AsyncClient() as client:
-        await client.post(graph_url, json=payload)
+    async with httpx.AsyncClient() as client: await client.post(graph_url, json=payload)
 
 async def reply_to_comment(comment_id: str, text: str):
     if not comment_id or "17865" in comment_id: return
     url = f"https://graph.facebook.com/v21.0/{comment_id}/replies?access_token={PAGE_ACCESS_TOKEN}"
-    payload = {"message": text}
-    async with httpx.AsyncClient() as client:
-        await client.post(url, json=payload)
+    async with httpx.AsyncClient() as client: await client.post(url, json={"message": text})
 
 async def check_token_status():
-    if not PAGE_ACCESS_TOKEN:
-        return {"status": "error", "message": "Token não configurado no .env"}
+    if not PAGE_ACCESS_TOKEN: return {"status": "error", "message": "Token não configurado"}
     url = f"https://graph.facebook.com/debug_token?input_token={PAGE_ACCESS_TOKEN}&access_token={PAGE_ACCESS_TOKEN}"
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(url)
             data = resp.json().get("data", {})
-            if "error" in resp.json():
-                error_msg = resp.json()["error"].get("message", "Token Inválido")
-                return {"status": "error", "message": f"Erro Meta: {error_msg}"}
-            if not data.get("is_valid"):
-                return {"status": "error", "message": "Token Expirado ou Inválido"}
+            if not data.get("is_valid"): return {"status": "error", "message": "Token Inválido"}
             return {"status": "ok", "message": "Conectado à Meta"}
-    except:
-        return {"status": "warning", "message": "Não foi possível verificar o status"}
+    except: return {"status": "warning", "message": "Erro de conexão Meta"}
 
 # --- Rotas da Interface ---
 
@@ -181,48 +144,28 @@ async def dashboard(request: Request, username: str = Depends(get_current_userna
 
 @app.post("/add-automation")
 async def add_automation(
-    keyword: str = Form(...),
-    comment_reply: str = Form(""),
-    dm_text: str = Form(""),
-    link_url: str = Form(""),
-    button_title: str = Form(""),
-    active_comment: bool = Form(False),
-    active_dm: bool = Form(False),
-    auto_like: bool = Form(False),
-    auto_id: Optional[str] = Form(None)
+    keyword: str = Form(...), comment_reply: str = Form(""), dm_text: str = Form(""),
+    link_url: str = Form(""), button_title: str = Form(""), active_comment: bool = Form(False),
+    active_dm: bool = Form(False), auto_like: bool = Form(False), auto_id: Optional[str] = Form(None)
 ):
     db = load_db()
     data = {
-        "keyword": keyword.strip().lower(),
-        "comment_reply": comment_reply,
-        "dm_text": dm_text,
-        "link_url": link_url,
-        "button_title": button_title or "Ver Mais",
-        "active_comment": active_comment,
-        "active_dm": active_dm,
-        "auto_like": auto_like,
+        "keyword": keyword.strip().lower(), "comment_reply": comment_reply, "dm_text": dm_text,
+        "link_url": link_url, "button_title": button_title or "Ver Mais",
+        "active_comment": active_comment, "active_dm": active_dm, "auto_like": auto_like,
         "created_at": datetime.now().isoformat()
     }
-
     if auto_id:
         for a in db["automations"]:
-            if a["id"] == auto_id:
-                a.update(data)
-                break
+            if a["id"] == auto_id: a.update(data); break
     else:
-        data["id"] = str(uuid.uuid4())
-        data["count_comments"] = 0
-        data["count_dms"] = 0
+        data["id"] = str(uuid.uuid4()); data["count_comments"] = 0; data["count_dms"] = 0
         db["automations"].append(data)
-    
     save_db(db)
     return RedirectResponse(url="/", status_code=303)
 
 @app.post("/save-welcome")
-async def save_welcome(
-    welcome_text: str = Form(...),
-    welcome_active: bool = Form(False)
-):
+async def save_welcome(welcome_text: str = Form(...), welcome_active: bool = Form(False)):
     db = load_db()
     db["welcome_config"] = {"active": welcome_active, "text": welcome_text}
     save_db(db)
@@ -240,123 +183,71 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 genai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 async def get_gemini_response(user_text: str, user_name: str):
-    if not genai_client:
-        return f"Olá {user_name}, como posso te ajudar hoje?"
-    
-    prompt = f"""
-    Você é um assistente virtual da Sinopsys Editora no Instagram.
-    O cliente se chama {user_name}.
-    O cliente disse: "{user_text}"
-    
-    Responda de forma gentil, profissional e concisa (máximo 2 parágrafos).
-    Foque em ser prestativo. Se não souber algo, peça para aguardar um atendente humano.
-    """
-    
+    if not genai_client: return f"Olá {user_name}, como posso te ajudar hoje?"
+    prompt = f"Você é um assistente virtual da Sinopsys Editora no Instagram. O cliente se chama {user_name}. O cliente disse: '{user_text}'. Responda de forma gentil e concisa."
     try:
-        response = genai_client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
+        response = genai_client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
         return response.text
-    except Exception as e:
-        print(f"Erro Gemini: {e}")
-        return f"Olá {user_name}, recebemos sua mensagem e logo um atendente falará com você!"
+    except Exception as e: return f"Olá {user_name}, logo um atendente falará com você!"
 
 # --- Webhook ---
 
 @app.post("/webhook")
 async def handle_webhook(request: Request):
-    # 1. Obter body bruto e assinatura para validação
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256", "")
-    
     if not verify_signature(body, signature):
-        print("❌ Assinatura Inválida!")
-        add_log("error", "Tentativa de acesso com assinatura inválida", {"signature": signature})
-        raise HTTPException(status_code=403, detail="Assinatura inválida")
-
+        add_log("error", "Assinatura Meta Inválida")
+        raise HTTPException(status_code=403, detail="Forbidden")
     try:
         data = json.loads(body)
         db = load_db()
-        
-        # Log para depuração em tempo real
-        print(f"[{datetime.now().isoformat()}] Webhook recebido: {json.dumps(data)}")
-
         if "entry" in data:
             for entry in data["entry"]:
-                # --- NOVO SEGUIDOR ---
                 if "changes" in entry:
                     for change in entry["changes"]:
                         if change.get("field") == "follows":
-                            value = change.get("value", {})
-                            user_id = value.get("user_id")
-                            add_log("system", f"Novo seguidor detectado (ID: {user_id})")
+                            user_id = change.get("value", {}).get("user_id")
                             if db["welcome_config"]["active"]:
                                 nome = await get_user_info(user_id)
-                                welcome_msg = db["welcome_config"]["text"].replace("{nome}", nome)
-                                await send_dm_with_button(user_id, welcome_msg, "", "")
-                                add_log("dm", f"Boas-vindas enviada para {nome}", {"user_id": user_id})
-
-                # --- DMs ---
+                                await send_dm_with_button(user_id, db["welcome_config"]["text"].replace("{nome}", nome), "", "")
+                                add_log("dm", f"Boas-vindas para {nome}")
                 if "messaging" in entry:
                     for msg in entry["messaging"]:
                         sender_id = msg.get("sender", {}).get("id")
                         user_text = msg.get("message", {}).get("text", "").lower().strip()
                         if not user_text: continue
-                        
-                        add_log("dm", f"DM recebida: '{user_text}'", {"sender_id": sender_id})
-                        
+                        add_log("dm", f"DM: '{user_text}'")
                         matched = False
                         for auto in db["automations"]:
                             if auto.get("active_dm") and auto["keyword"] in user_text:
                                 nome = await get_user_info(sender_id)
-                                final_msg = auto['dm_text'].replace("{nome}", nome)
-                                await send_dm_with_button(sender_id, final_msg, auto.get("button_title"), auto.get("link_url"))
-                                auto["count_dms"] += 1
-                                save_db(db)
-                                add_log("system", f"Automação disparada (DM): {auto['keyword']}", {"keyword": auto['keyword'], "user": nome})
-                                matched = True
-                                break
-                        
+                                await send_dm_with_button(sender_id, auto['dm_text'].replace("{nome}", nome), auto.get("button_title"), auto.get("link_url"))
+                                auto["count_dms"] += 1; save_db(db)
+                                add_log("system", f"Automação DM: {auto['keyword']}")
+                                matched = True; break
                         if not matched:
                             nome = await get_user_info(sender_id)
-                            res_text = await get_gemini_response(user_text, nome)
-                            await send_dm_with_button(sender_id, res_text, "", "")
-                            add_log("system", f"Resposta Gemini enviada para {nome}", {"input": user_text, "output": res_text})
-
-                # --- COMENTÁRIOS ---
+                            res = await get_gemini_response(user_text, nome)
+                            await send_dm_with_button(sender_id, res, "", "")
+                            add_log("system", f"Gemini para {nome}")
                 if "changes" in entry:
                     for change in entry["changes"]:
-                        field = change.get("field")
-                        value = change.get("value", {})
-                        if field in ["comments", "feed"]:
-                            comment_id = value.get("id")
-                            user_text = value.get("text", "").lower().strip()
-                            sender_id = value.get("from", {}).get("id")
+                        if change.get("field") in ["comments", "feed"]:
+                            val = change.get("value", {})
+                            user_text = val.get("text", "").lower().strip()
                             if not user_text: continue
-
-                            add_log("comment", f"Comentário recebido: '{user_text}'", {"comment_id": comment_id, "sender_id": sender_id})
-                            
+                            add_log("comment", f"Comentário: '{user_text}'")
                             for auto in db["automations"]:
                                 if auto.get("active_comment") and auto["keyword"] in user_text:
-                                    nome = await get_user_info(sender_id)
-                                    # 1. Curtir Comentário
-                                    if auto.get("auto_like"): 
-                                        await like_comment(comment_id)
-                                    # 2. Responder Comentário
-                                    await reply_to_comment(comment_id, auto["comment_reply"].replace("{nome}", nome))
-                                    # 3. Enviar Direct com Botão
-                                    final_dm = auto['dm_text'].replace("{nome}", nome)
-                                    await send_dm_with_button(sender_id, final_dm, auto.get("button_title"), auto.get("link_url"))
-                                    
-                                    auto["count_comments"] += 1
-                                    save_db(db)
-                                    add_log("system", f"Automação disparada (Comentário): {auto['keyword']}", {"keyword": auto['keyword'], "user": nome})
+                                    nome = await get_user_info(val.get("from", {}).get("id"))
+                                    if auto.get("auto_like"): await like_comment(val.get("id"))
+                                    await reply_to_comment(val.get("id"), auto["comment_reply"].replace("{nome}", nome))
+                                    await send_dm_with_button(val.get("from", {}).get("id"), auto['dm_text'].replace("{nome}", nome), auto.get("button_title"), auto.get("link_url"))
+                                    auto["count_comments"] += 1; save_db(db)
+                                    add_log("system", f"Automação Comentário: {auto['keyword']}")
                                     break
-    except Exception as e:
-        add_log("error", f"Falha no processamento: {str(e)}")
-        import traceback
-        traceback.print_exc()
+    except Exception as e: add_log("error", f"Erro: {str(e)}")
     return {"status": "ok"}
 
 @app.get("/webhook")
